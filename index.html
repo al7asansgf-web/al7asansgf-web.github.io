@@ -1,0 +1,332 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>الحسن السقاف | صانع محتوى</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Tajawal", -apple-system, "Segoe UI", sans-serif;
+    background: radial-gradient(ellipse at 50% 50%, #1a1a1d 0%, #0b0b0c 70%);
+    min-height: 100vh;
+    overflow: hidden;
+    color: #222;
+  }
+  .stage { position: relative; width: 100vw; height: 100vh; }
+  /* soft floor shadow under the character */
+  .avatar::after {
+    content: ""; position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
+    width: 220px; height: 26px; border-radius: 50%;
+    background: radial-gradient(ellipse, rgba(255,255,255,.14), transparent 70%); z-index: -1;
+  }
+
+  .item {
+    position: absolute;
+    display: flex; flex-direction: column; align-items: center;
+    cursor: grab; user-select: none; touch-action: none;
+    transform: translate(-50%, -50%);
+  }
+  .item:active { cursor: grabbing; }
+  .item .pic {
+    width: var(--w, 210px); height: var(--w, 210px);
+    display: flex; align-items: center; justify-content: center;
+    transition: transform .25s ease, filter .25s ease;
+    filter: drop-shadow(0 10px 24px rgba(0,0,0,.6));
+  }
+  .item .pic img { width: 100%; height: 100%; object-fit: contain; pointer-events: none; }
+  .item .pic .ph { font-size: calc(var(--w, 160px) * .55); }
+  .item:hover .pic { transform: translateY(-8px) rotate(-3deg) scale(1.05); filter: drop-shadow(0 0 30px rgba(255,255,255,.25)); }
+  .item .label { margin-top: 10px; font-size: 16px; color: #eee; font-weight: 700; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.15); padding: 2px 12px; border-radius: 999px; backdrop-filter: blur(6px); }
+
+  .avatar { --w: 340px; }
+  .avatar .pic { height: 50vh; }
+  .tiktok-under { --w: 150px; }
+
+  /* ===== creative monochrome background ===== */
+  #dots { position: fixed; inset: 0; z-index: -3; display: block; }
+  /* giant outlined text sliding behind */
+  .marquee { position: fixed; inset: 0; z-index: -2; pointer-events: none; overflow: hidden; direction: ltr; }
+  .row { position: absolute; left: 0; white-space: nowrap; display: flex; width: max-content;
+         font-weight: 800; font-size: 17vh; line-height: 1; letter-spacing: -.02em;
+         color: transparent; -webkit-text-stroke: 1.5px rgba(255,255,255,.12); }
+  .row span { padding-right: 4vh; }
+  .row.r1 { top: 6vh; animation: slideL 60s linear infinite; }
+  .row.r2 { bottom: 4vh; animation: slideR 70s linear infinite; -webkit-text-stroke-color: rgba(255,255,255,.09); }
+  .row .solid { color: rgba(255,255,255,.05); -webkit-text-stroke: 0; }
+  @keyframes slideL { to { transform: translateX(-50%); } }
+  @keyframes slideR { from { transform: translateX(-50%); } to { transform: translateX(0); } }
+  /* light that follows the mouse */
+  .spot { position: fixed; inset: 0; z-index: -1; pointer-events: none;
+          background: radial-gradient(420px circle at var(--mx, 50%) var(--my, 50%), rgba(255,255,255,.07), transparent 70%); }
+  /* film grain */
+  .grain { position: fixed; inset: -50%; z-index: 50; pointer-events: none; opacity: .07;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    animation: grain 1s steps(4) infinite; }
+  @keyframes grain { 25%{transform:translate(-3%,2%)} 50%{transform:translate(2%,-3%)} 75%{transform:translate(-2%,-1%)} }
+  /* custom cursor ring */
+  .ring { position: fixed; width: 34px; height: 34px; border: 1.5px solid #111; border-radius: 50%;
+          pointer-events: none; z-index: 60; transform: translate(-50%,-50%); transition: width .25s, height .25s, background .25s; mix-blend-mode: difference; border-color: #fff; }
+  .ring.big { width: 74px; height: 74px; background: #fff; }
+  /* intro */
+  .item { animation: enter .9s cubic-bezier(.2,.8,.2,1) both; }
+  .item:nth-child(2) { animation-delay: .25s } .item:nth-child(3) { animation-delay: .4s } .item:nth-child(4) { animation-delay: .55s }
+  @keyframes enter { from { opacity: 0; scale: .6; filter: blur(10px); } to { opacity: 1; scale: 1; filter: blur(0); } }
+  @media (hover: none) { .ring, .spot { display: none; } }
+  @media (prefers-reduced-motion: reduce) { .row, .grain, .item { animation: none; } }
+  .avatar:hover .pic { transform: translateY(-6px); }
+
+  /* popup window */
+  .overlay { position: fixed; inset: 0; background: rgba(0,0,0,.25); display: none; align-items: center; justify-content: center; z-index: 100; padding: 16px; }
+  .overlay.open { display: flex; }
+  .window {
+    background: #fff; width: 100%; max-width: 600px; max-height: 85vh; overflow: auto;
+    border-radius: 14px; box-shadow: 0 30px 60px rgba(0,0,0,.25);
+    animation: pop .25s ease;
+  }
+  @keyframes pop { from { transform: scale(.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  .bar { display: flex; align-items: center; gap: 8px; padding: 12px 14px; border-bottom: 1px solid #eee; position: sticky; top: 0; background: #fff; z-index: 2; }
+  .dot { width: 12px; height: 12px; border-radius: 50%; background: #ddd; }
+  .dot.red { background: #ff5f57; cursor: pointer; }
+  .dot.yellow { background: #febc2e; } .dot.green { background: #28c840; }
+  .bar .title { margin-right: 8px; font-size: 14px; color: #666; }
+  .content { padding: 24px; line-height: 1.8; }
+  .content h2 { margin-bottom: 8px; font-weight: 800; }
+  .content h3 { margin: 22px 0 10px; font-size: 17px; }
+  .content p { margin-bottom: 12px; color: #444; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+  .card { background: #f4f4f4; border-radius: 10px; padding: 14px; font-size: 14px; }
+  .card b { display: block; font-size: 22px; font-weight: 800; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip { background: #f1f1f1; border-radius: 999px; padding: 6px 14px; font-size: 14px; font-weight: 500; }
+  .btns { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+  .btn { display: inline-block; padding: 10px 18px; background: #111; color: #fff; border-radius: 999px; text-decoration: none; font-size: 15px; }
+  .btn.green { background: #25d366; }
+  .ltr { direction: ltr; unicode-bidi: embed; }
+
+  /* videos */
+  .videos { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
+  .videos iframe { width: 100%; aspect-ratio: 9/16; border: 0; border-radius: 10px; background: #000; }
+  .videos video { width: 100%; aspect-ratio: 9/16; border-radius: 10px; background: #000; object-fit: cover; display: block; }
+  .vbox { position: relative; }
+  .vbox.featured { grid-column: 1 / -1; max-width: 340px; margin: 0 auto; width: 100%; }
+  .vtitle { text-align: center; font-size: 14px; font-weight: 500; margin-top: 6px; color: #555; }
+  .badge { position: absolute; top: 10px; right: 10px; z-index: 1; background: #fe2c55; color: #fff; font-weight: 700; font-size: 14px; padding: 5px 12px; border-radius: 999px; box-shadow: 0 4px 10px rgba(0,0,0,.25); }
+  .vslot { aspect-ratio: 9/16; border: 2px dashed #ccc; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #aaa; font-size: 14px; text-align: center; padding: 8px; }
+
+  /* phone layout */
+  @media (max-width: 760px) {
+    body { overflow: auto; }
+    .stage { height: auto; min-height: 100vh; display: grid; grid-template-columns: 1fr 1fr; gap: 12px 8px; padding: 24px 16px; align-content: center;
+             grid-template-areas: "work work" "avatar avatar" "tiktok contact"; }
+    .item { position: static; transform: none; translate: none !important; --w: 120px; }
+    .avatar { grid-area: avatar; --w: 220px; }
+    .avatar .pic { height: 340px; }
+    [data-open="work"] { grid-area: work; }
+    [data-open="contact"] { grid-area: contact; }
+    [data-link="tiktok"] { grid-area: tiktok; }
+  }
+</style>
+</head>
+<body>
+
+<canvas id="dots"></canvas>
+<div class="marquee" aria-hidden="true">
+  <div class="row r1" id="r1"></div>
+  <div class="row r2" id="r2"></div>
+</div>
+<div class="spot"></div>
+<div class="grain"></div>
+<div class="ring" id="ring"></div>
+
+<div class="stage" id="stage">
+  <div class="item avatar" data-open="about" style="left:50%; top:57%">
+    <div class="pic"><img src="avatar.png" alt="الحسن السقاف"></div>
+    <div class="label">من أنا</div>
+  </div>
+  <div class="item tiktok-under" data-open="work" style="left:50%; top:calc(32vh - 120px)">
+    <div class="pic"><img src="folder.png" alt="أعمالي"></div>
+    <div class="label">أعمالي</div>
+  </div>
+  <div class="item" data-open="contact" style="left:calc(50% - 290px); top:50%">
+    <div class="pic"><img src="phone.png" alt="تواصل"></div>
+    <div class="label">تواصل معي</div>
+  </div>
+  <div class="item" data-link="tiktok" style="left:calc(50% + 290px); top:68%">
+    <div class="pic"><img src="tiktok.png" alt="تيك توك"></div>
+    <div class="label">تيك توك ↖</div>
+  </div>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="window">
+    <div class="bar">
+      <span class="dot red" id="close"></span><span class="dot yellow"></span><span class="dot green"></span>
+      <span class="title" id="winTitle"></span>
+    </div>
+    <div class="content" id="winContent"></div>
+  </div>
+</div>
+
+<script>
+// ===== بياناتك =====
+const ME = {
+  name: "الحسن السقاف",
+  email: "al7asan.sgf@gmail.com",
+  phone: "0570622164",
+  whatsapp: "https://wa.me/966570622164",
+  tiktok: "https://www.tiktok.com/@al7asannn",
+};
+
+const BRANDS = ["أبوزيد", "وصال", "ملك العجول الرضيعة", "أبيات", "أدمكو", "الحوت العقارية", "سيتي بار", "وصال كوب", "أوتار الشاورما"];
+
+// ===== مقاطعك (من 3 إلى 5) =====
+// رابط تيك توك، أو اسم ملف فيديو داخل مجلد videos مثل "videos/clip1.mp4"
+const VIDEOS = [
+  { src: "https://www.tiktok.com/@abuzaidrest/video/7691663842266369287", title: "أبوزيد", badge: "🔥 +2 مليون مشاهدة" },
+  { src: "videos/alhoot.mp4", title: "الحوت العقارية" },
+  { src: "videos/citybar.mp4", title: "سيتي بار" },
+  { src: "videos/awtar.mp4", title: "أوتار الشاورما" },
+  { src: "videos/malik-alojool.mp4", title: "افتتاح ملك العجول" },
+];
+
+function videosHTML() {
+  const items = VIDEOS.map(v => {
+    const id = (v.src.match(/tiktok\.com\/.*video\/(\d+)/) || [])[1];
+    const media = id
+      ? `<iframe src="https://www.tiktok.com/embed/v2/${id}" allowfullscreen loading="lazy"></iframe>`
+      : `<video src="${v.src}" controls playsinline preload="metadata"></video>`;
+    return `<div class="vbox ${v.badge ? "featured" : ""}">
+      ${v.badge ? `<span class="badge">${v.badge}</span>` : ""}
+      ${media}
+      <div class="vtitle">${v.title || ""}</div>
+    </div>`;
+  });
+  while (items.length < 3) items.push(`<div class="vslot">مقطع قريباً</div>`);
+  return `<div class="videos">${items.join("")}</div>`;
+}
+
+const WINDOWS = {
+  about: { title: "من أنا", html: () => `
+    <h2>أهلاً، أنا ${ME.name} 👋</h2>
+    <p>صانع محتوى إبداعي وخريج هندسة كهربائية. أجمع بين التفكير الهندسي المنظّم والحس الإبداعي لصناعة محتوى يوصل رسالة البراند بأسلوب قريب من الناس ويحقق نتائج حقيقية.</p>
+    <p>تعاونت مع العديد من العلامات التجارية في مجالات المطاعم والعقار والتجزئة، ولدي خبرة إدارية في شركة <b>نقطة إكس</b> التسويقية.</p>
+    <div class="grid">
+      <div class="card"><b class="ltr">+3.6M</b>مشاهدة لمقاطع أبوزيد</div>
+      <div class="card"><b class="ltr">+9</b>براندات تعاونت معها</div>
+    </div>` },
+  work: { title: "أعمالي", html: () => `
+    <h2>أعمالي</h2>
+    <div class="grid">
+      <div class="card"><b>أبوزيد</b>أكثر من 3.6 مليون مشاهدة</div>
+      <div class="card"><b>نقطة إكس</b>خبرة إدارية في شركة تسويقية</div>
+    </div>
+    <h3>البراندات اللي اشتغلت معها</h3>
+    <div class="chips">${BRANDS.map(b => `<span class="chip">${b}</span>`).join("")}</div>
+    <h3>من مقاطعي</h3>
+    ${videosHTML()}` },
+  contact: { title: "تواصل معي", html: () => `
+    <h2>خلنا نشتغل سوا</h2>
+    <p>للتعاون والإعلانات تواصل معي:</p>
+    <div class="btns">
+      <a class="btn green" href="${ME.whatsapp}" target="_blank">واتساب</a>
+      <a class="btn" href="tel:${ME.phone}"><span class="ltr">${ME.phone}</span></a>
+      <a class="btn" href="mailto:${ME.email}"><span class="ltr">${ME.email}</span></a>
+      <a class="btn" href="${ME.tiktok}" target="_blank">تيك توك</a>
+    </div>` },
+};
+
+// ===== placeholder if an image is missing =====
+const EMOJI = { "avatar.png":"🧍", "folder.png":"📁", "phone.png":"📱", "tiktok.png":"🎵" };
+document.querySelectorAll(".pic img").forEach(img => {
+  img.onerror = () => { img.outerHTML = `<span class="ph">${EMOJI[img.getAttribute("src")] || "⬜"}</span>`; };
+});
+
+// ===== popup windows =====
+const overlay = document.getElementById("overlay");
+const closeWin = () => { overlay.classList.remove("open"); document.getElementById("winContent").innerHTML = ""; };
+function openWin(key) {
+  document.getElementById("winTitle").textContent = WINDOWS[key].title;
+  document.getElementById("winContent").innerHTML = WINDOWS[key].html();
+  overlay.classList.add("open");
+}
+document.getElementById("close").onclick = closeWin;
+overlay.onclick = e => { if (e.target === overlay) closeWin(); };
+document.addEventListener("keydown", e => { if (e.key === "Escape") closeWin(); });
+
+// ===== giant sliding text =====
+const fill = (el, words) => { const s = words.map((w, i) => `<span class="${i % 2 ? "solid" : ""}">${w}</span>`).join(""); el.innerHTML = s + s; };
+fill(document.getElementById("r1"), ["CONTENT CREATOR", "✦", "AL7ASAN", "✦", "CONTENT CREATOR", "✦", "AL7ASAN", "✦"]);
+fill(document.getElementById("r2"), ["صانع محتوى", "✦", "الحسن السقاف", "✦", "صانع محتوى", "✦", "الحسن السقاف", "✦"]);
+
+// ===== interactive dot field (reacts to mouse, ripples on click) =====
+(() => {
+  const c = document.getElementById("dots"), ctx = c.getContext("2d");
+  const GAP = 26; let W, H, dpr, mx = -999, my = -999, ripples = [];
+  const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const size = () => { dpr = devicePixelRatio || 1; W = innerWidth; H = innerHeight; c.width = W * dpr; c.height = H * dpr; c.style.width = W + "px"; c.style.height = H + "px"; ctx.setTransform(dpr, 0, 0, dpr, 0, 0); };
+  size(); addEventListener("resize", size);
+  addEventListener("pointermove", e => { mx = e.clientX; my = e.clientY;
+    document.documentElement.style.setProperty("--mx", mx + "px"); document.documentElement.style.setProperty("--my", my + "px"); });
+  addEventListener("pointerdown", e => ripples.push({ x: e.clientX, y: e.clientY, t: performance.now() }));
+  function frame(now) {
+    ctx.clearRect(0, 0, W, H);
+    ripples = ripples.filter(r => now - r.t < 1600);
+    for (let x = GAP / 2; x < W; x += GAP) for (let y = GAP / 2; y < H; y += GAP) {
+      let dx = x - mx, dy = y - my, d = Math.hypot(dx, dy);
+      let k = Math.max(0, 1 - d / 160);                       // mouse influence
+      let wave = still ? 0 : Math.sin(x * .012 + y * .008 + now * .0012) * .35; // idle breathing
+      for (const r of ripples) {                               // click ripples
+        const rd = Math.hypot(x - r.x, y - r.y), front = (now - r.t) * .7;
+        k = Math.max(k, Math.max(0, 1 - Math.abs(rd - front) / 40) * (1 - (now - r.t) / 1600));
+      }
+      const push = k * 10, px = d ? x + dx / d * push : x, py = d ? y + dy / d * push : y;
+      ctx.fillStyle = `rgba(255,255,255,${.12 + k * .7})`;
+      ctx.beginPath(); ctx.arc(px, py, 1.1 + wave * .5 + k * 2.6, 0, 7); ctx.fill();
+    }
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+
+// ===== cursor ring + parallax =====
+const ring = document.getElementById("ring");
+addEventListener("pointermove", e => {
+  ring.style.left = e.clientX + "px"; ring.style.top = e.clientY + "px";
+  ring.classList.toggle("big", !!e.target.closest(".item"));
+  if (!desktop()) return;
+  const nx = e.clientX / innerWidth - .5, ny = e.clientY / innerHeight - .5;
+  document.querySelectorAll(".item").forEach((el, i) => {
+    const depth = el.classList.contains("avatar") ? 8 : 22 + i * 4;
+    el.style.translate = `${-nx * depth}px ${-ny * depth}px`;
+  });
+});
+
+// ===== drag on desktop, click to open =====
+const desktop = () => window.innerWidth > 760;
+document.querySelectorAll(".item").forEach(el => {
+  let sx, sy, ox, oy, moved = false;
+  el.addEventListener("pointerdown", e => {
+    moved = false; sx = e.clientX; sy = e.clientY;
+    ox = el.offsetLeft; oy = el.offsetTop;
+    if (desktop()) el.setPointerCapture(e.pointerId);
+    el.style.zIndex = 10;
+  });
+  el.addEventListener("pointermove", e => {
+    if (!el.hasPointerCapture(e.pointerId)) return;
+    const dx = e.clientX - sx, dy = e.clientY - sy;
+    if (Math.abs(dx) + Math.abs(dy) > 5) moved = true;
+    if (moved) { el.style.left = ox + dx + "px"; el.style.top = oy + dy + "px"; }
+  });
+  el.addEventListener("pointerup", () => {
+    el.style.zIndex = "";
+    if (moved) return;
+    if (el.dataset.link) window.open(ME[el.dataset.link], "_blank");
+    else openWin(el.dataset.open);
+  });
+});
+</script>
+</body>
+</html>
